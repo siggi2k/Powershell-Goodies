@@ -1,3 +1,14 @@
+# createADUSer
+Makes user creation a little bit easier
+
+This script adds a user to the active directory and places the user in the correct ou
+1. Gather information needed about user
+2. Create the user if the username is available
+3. sets the user principal name according to what domain user is part of
+4. The user is added to base group and group belonging to the users department
+5. If the user needs an office 365 subscription the user is added to the OU that is synchronized to the tenant
+6. If user needs office 365 subscription it is given a license in the Office 365 tenant
+
 # manageDomainUsers
 Something to make Domain User Management a bit easier
 
