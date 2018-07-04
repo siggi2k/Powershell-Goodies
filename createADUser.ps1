@@ -83,13 +83,13 @@ try {
     Write-Host failed adding $upname to everyone
     }
 
-#Þessar 5 Groups eru fyrir þær deildir sem eru á skrifstofunni, allir notendur þurfa að vera í einni þeirra
+# Add the user to the correct group in active directory
 do {
     switch ($userGroup) {
         'Finance' {Add-ADGroupMember -Identity Fjárreiðudeild -Members $username; Write-Host "User added to Finance"}
         'Sales' {Add-ADGroupMember -Identity Söludeild -Members $username; Write-Host "User added to Sales"}
         'Marketing' {Add-ADGroupMember -Identity Markaðsdeild -Members $username; Write-Host "User added to Marketing"}
-        'Hotels' {Add-ADGroupMember -Identity Markaðsdeild -Members $username; Write-Host "User added to Hotels"}
+        'Hotels' {Add-ADGroupMember -Identity Hotels -Members $username; Write-Host "User added to Hotels"}
         'Operations' {Add-ADGroupMember -Identity Operations -Members $username; Write-Host "User added to Operations"}
     } 
 } until (($userGroup -eq "Finance") -or ($userGroup -eq "Sales") -or ($userGroup -eq "Marketing") -or ($userGroup -eq "Hotels") -or ($userGroup -eq "Operations"))
@@ -108,7 +108,7 @@ if ($path -eq "OU=Office,OU=Staff,DC=mydomain,DC=local"){
     $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
     Import-PSSession $Session
 
-    #$msolcred = Get-Credential
+    
     try {
         Connect-MsolService -Credential $UserCredential
         Write-Host "Authentication success"
@@ -117,9 +117,10 @@ if ($path -eq "OU=Office,OU=Staff,DC=mydomain,DC=local"){
         Write-Host "Authentication failed.."
     }
 
-    #Wait a bit while the user is replicated to Office 365
+    # Wait a bit while the user is replicated to Office 365
     Start-Sleep -s 30
 
+    # Assign the license to the user
     if($path -eq 'OU=Office,OU=Staff,DC=mydomain,DC=local') {
         try {
             Set-MsolUser -UserPrincipalName $upname -UsageLocation "IS"
@@ -130,5 +131,4 @@ if ($path -eq "OU=Office,OU=Staff,DC=mydomain,DC=local"){
             Write-Host "No subscription added to user"
         }
     }
-    Start-Sleep -s 5
 }
