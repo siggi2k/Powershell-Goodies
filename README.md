@@ -19,3 +19,9 @@ This script takes a few steps to make life managing an active directory a bit ea
 4. Deletes the User from the active directory 30 days after expiry
 
 This is all logged in 2 seperate text files.
+
+# checkSSLCert
+Alerts if a website's SSL Certificate is about to expire
+
+1. Checks when SSL Certificates for websites in array expire
+2. Lists the website url of certificates that expire in the next 90 days
