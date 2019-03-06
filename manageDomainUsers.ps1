@@ -8,6 +8,20 @@ foreach ($item in $InactiveUsers) {
 		ForEach-Object { 
 			Disable-ADAccount $_.ObjectGuid
 
+			# Get the name in a nice format for Push Notification
+			$itemName = $item | Select -ExpandProperty Name
+
+			# Push Notification parameters
+			$body = @{
+				type = "note"
+				title = "User Disabled"
+				body = "The user " + $itemName + " was disabled due to Inactivity."
+				channel_tag = "my_pushbullet_channel"
+				}
+
+			#Send a Push Notification to the channel
+			Invoke-WebRequest -Uri $PushURL -Credential $cred -Method Post -Body $body 
+
 			# Logging that the user was Disabled to a file
 			Add-Content X:\Logs\ActiveDirectory\DisabledUsersMoved.txt "$(get-date) - $item was disabled automatically due to inactivity"
 		}
@@ -16,14 +30,28 @@ foreach ($item in $InactiveUsers) {
 # Move disabled users to Dead users folder
 $DisabledUsers = Get-Aduser -Filter {(Enabled -eq 'false')} -SearchBase "OU=Staff,DC=mydomain,DC=local"
 foreach ($item in $DisabledUsers) {
+	# Get the name in a nice format for Push Notification
+	$itemName = $item | Select -ExpandProperty Name
+
 	# Get today's date
 	$today = Get-Date -Format g
 
 	# Flag the user as expired today, so it can be deleted after 30 days
 	Set-ADAccountExpiration $item $today
 	
-	# Moveing the user to the Dead User OU
+	# Moving the user to the Dead User OU
 	Move-ADObject -Identity $item -TargetPath "OU=Deactivated Users,DC=mydomain,DC=local"
+
+	# Push Notification parameters
+    $body = @{
+		type = "note"
+		title = "User Archived"
+		body = "The user " + $itemName + " was archived, and will be Deleted in 30 days."
+		channel_tag = "my_pushbullet_channel"
+		}
+	
+	#Send a Push Notification to the channel
+	Invoke-WebRequest -Uri $PushURL -Credential $cred -Method Post -Body $body 
 
 	# Logging that the user was moved to a file
 	Add-Content X:\Logs\ActiveDirectory\DisabledUsersMoved.txt "$(get-date) - $item was moved to Deactivated Users"
@@ -87,12 +115,28 @@ foreach ($item in $Homefolderlocation) {
 	}
 }
 
+
 # Get a list of all users that expired more than 30 days ago
 $ExpiredUsers = Search-ADAccount -AccountExpired | Where-Object {$_.AccountExpirationDate -lt ((Get-Date).AddDays(-30))}
 
 # Delete Users that expired more than 30 days ago
 ForEach ($item in $ExpiredUsers) {
+	
+	# Get the name in a nice format for Push Notification
+	$itemName = $item | Select -ExpandProperty Name
+	
 	Remove-ADObject -Identity $item -Confirm:$false
+
+	 # Push Notification parameters
+	 $body = @{
+        type = "note"
+        title = "User Deleted"
+        body = "The user " + $itemName + " was Deleted since it was archived more than 30 days ago."
+        channel_tag = "arcticadventures"
+        }
+
+    #Send a Push Notification to the channel
+    Invoke-WebRequest -Uri $PushURL -Credential $cred -Method Post -Body $body
 
 	# Log deletion of user from domain
 	Add-Content 'X:\Logs\ActiveDirectory\ExpiredUsersDeleted.txt' "Domain User $item was deleted from domain on $(get-date)"
