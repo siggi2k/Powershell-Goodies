@@ -1,9 +1,16 @@
+### Pushbullet API settings
+$PushURL = "https://api.pushbullet.com/v2/pushes"
+$APIKey = "----"
+$channel_tag = "----"
+$Cred = New-Object System.Management.Automation.PSCredential ($APIKey, (ConvertTo-SecureString $APIKey -AsPlainText -Force))
+
 # Finds all users that have been inactive for 30 days or more
 $InactiveUsers = Search-ADAccount -AccountInactive -Timespan '30' -usersonly -SearchBase "OU=Staff,DC=mydomain,DC=local"
 
-# Exclude staff on vacation longer than the expiration time
+# Disable inactive users
 foreach ($item in $InactiveUsers) {
 	get-aduser $item -Properties MemberOf | 
+		# Exclude staff on vacation longer than the expiration time
 		Where-Object {!($_.MemberOf -like "*CN=Extended Vacation*")} | 
 		ForEach-Object { 
 			Disable-ADAccount $_.ObjectGuid
@@ -16,7 +23,7 @@ foreach ($item in $InactiveUsers) {
 				type = "note"
 				title = "User Disabled"
 				body = "The user " + $itemName + " was disabled due to Inactivity."
-				channel_tag = "my_pushbullet_channel"
+				channel_tag = $channel_tag
 				}
 
 			#Send a Push Notification to the channel
@@ -47,7 +54,7 @@ foreach ($item in $DisabledUsers) {
 		type = "note"
 		title = "User Archived"
 		body = "The user " + $itemName + " was archived, and will be Deleted in 30 days."
-		channel_tag = "my_pushbullet_channel"
+		channel_tag = $channel_tag
 		}
 	
 	#Send a Push Notification to the channel
@@ -132,7 +139,7 @@ ForEach ($item in $ExpiredUsers) {
         type = "note"
         title = "User Deleted"
         body = "The user " + $itemName + " was Deleted since it was archived more than 30 days ago."
-        channel_tag = "arcticadventures"
+        channel_tag = $channel_tag
         }
 
     #Send a Push Notification to the channel
