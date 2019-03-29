@@ -11,12 +11,12 @@ $InactiveUsers = Search-ADAccount -AccountInactive -Timespan '30' -usersonly -Se
 foreach ($item in $InactiveUsers) {
 	get-aduser $item -Properties MemberOf | 
 		# Exclude staff on vacation longer than the expiration time
-		Where-Object {!($_.MemberOf -like "*CN=Extended Vacation*")} | 
+		Where-Object {!($_.MemberOf -like "*CN=Extended Vacation*") -and !($_.lastLogonTimeStamp -ne "*")} | 
 		ForEach-Object { 
 			Disable-ADAccount $_.ObjectGuid
 
 			# Get the name in a nice format for Push Notification
-			$itemName = $item | Select -ExpandProperty Name
+			$itemName = $item | Select-Object -ExpandProperty Name
 
 			# Push Notification parameters
 			$body = @{
@@ -38,7 +38,7 @@ foreach ($item in $InactiveUsers) {
 $DisabledUsers = Get-Aduser -Filter {(Enabled -eq 'false')} -SearchBase "OU=Staff,DC=mydomain,DC=local"
 foreach ($item in $DisabledUsers) {
 	# Get the name in a nice format for Push Notification
-	$itemName = $item | Select -ExpandProperty Name
+	$itemName = $item | Select-Object -ExpandProperty Name
 
 	# Get today's date
 	$today = Get-Date -Format g
@@ -130,7 +130,7 @@ $ExpiredUsers = Search-ADAccount -AccountExpired | Where-Object {$_.AccountExpir
 ForEach ($item in $ExpiredUsers) {
 	
 	# Get the name in a nice format for Push Notification
-	$itemName = $item | Select -ExpandProperty Name
+	$itemName = $item | Select-Object -ExpandProperty Name
 	
 	Remove-ADObject -Identity $item -Confirm:$false
 
