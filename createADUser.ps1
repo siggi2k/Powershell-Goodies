@@ -86,9 +86,9 @@ try {
 # Add the user to the correct group in active directory
 do {
     switch ($userGroup) {
-        'Finance' {Add-ADGroupMember -Identity Fjárreiðudeild -Members $username; Write-Host "User added to Finance"}
-        'Sales' {Add-ADGroupMember -Identity Söludeild -Members $username; Write-Host "User added to Sales"}
-        'Marketing' {Add-ADGroupMember -Identity Markaðsdeild -Members $username; Write-Host "User added to Marketing"}
+        'Finance' {Add-ADGroupMember -Identity Finance -Members $username; Write-Host "User added to Finance"}
+        'Sales' {Add-ADGroupMember -Identity Sales -Members $username; Write-Host "User added to Sales"}
+        'Marketing' {Add-ADGroupMember -Identity Marketing -Members $username; Write-Host "User added to Marketing"}
         'Hotels' {Add-ADGroupMember -Identity Hotels -Members $username; Write-Host "User added to Hotels"}
         'Operations' {Add-ADGroupMember -Identity Operations -Members $username; Write-Host "User added to Operations"}
     } 
@@ -97,38 +97,59 @@ do {
 ## Adds the user to the group that is synchronized with Office 365 if applicable ##
 if ($path -eq "OU=Office,OU=Staff,DC=mydomain,DC=local"){
     try {
-        Start-ADSyncSyncCycle -PolicyType Delta; Write-Host "AD Sync Successful"
+        Start-ADSyncSyncCycle -PolicyType Delta
+        Write-Host "AD Sync initialized"
+        Start-Sleep -s 2
     }
     Catch {
         Write-Host "ADSyncCycle Failed..."
     }
+    
+    ## Check if a connection has been established with O365 ##
+    function MSOLConnected {
+        Get-MsolDomain -ErrorAction SilentlyContinue | out-null
+        $result = $?
+        return $result
+    }
 
-    # Connect to the Office 365 Tenant as the global admin
-    $UserCredential = Get-Credential admin@mydomain.onmicrosoft.com
-    $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
-    Import-PSSession $Session
+   if (-not (MSOLConnected)) {
+            
+        # Tengjast við Office 365 með Tenant Global Admin
+        $UserCredential = Get-Credential host@mydomain.onmicrosoft.com
+        $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
+        Import-PSSession $Session
 
     
-    try {
-        Connect-MsolService -Credential $UserCredential
-        Write-Host "Authentication success"
-    }
-    catch{
-        Write-Host "Authentication failed.."
-    }
-
-    # Wait a bit while the user is replicated to Office 365
-    Start-Sleep -s 30
-
-    # Assign the license to the user
-    if($path -eq 'OU=Office,OU=Staff,DC=mydomain,DC=local') {
         try {
-            Set-MsolUser -UserPrincipalName $upname -UsageLocation "IS"
-            Set-MsolUserLicense -UserPrincipalName $upname -AddLicenses mydomain:O365_BUSINESS
-            Write-Host "Adding subscription to user $upname "
+            Connect-MsolService -Credential $UserCredential
+            Write-Host "Authentication success"
         }
-        Catch {
-            Write-Host "No subscription added to user"
+        catch{
+            Write-Host "Authentication failed.."
         }
+
+        Start-Sleep -s 10
+    }else {
+        write-host "already connected to msol"
+    }
+   
+    # Assign the license to the user
+    if($path -eq 'OU=Office,OU=Office,DC=mydomaincontroller,DC=local') {
+
+        $User = Get-MsolUser -UserPrincipalName $upname -ErrorAction SilentlyContinue
+        
+        Do {
+            # Check if the user exists in O365
+            $User = Get-MsolUser -UserPrincipalName $upname -ErrorAction SilentlyContinue
+
+            #Wait 10 seconds before checking again if the user exists
+            Start-Sleep -s 10
+
+        } Until ($User -ne $null)
+        
+        Set-MsolUser -UserPrincipalName $upname -UsageLocation "IS"
+        Set-MsolUserLicense -UserPrincipalName $upname -AddLicenses mydomain:O365_BUSINESS
+        Write-Host "Adding subscription to user $upname "
+
     }
 }
