@@ -29,7 +29,7 @@ foreach ($url in $urls){
         # Set the response to $null if no valid SSL Certificate is found
         $cert = ''
     }
-    if ($cert -eq $null) {
+    if ($null -eq $cert) {
         Write-Host "$url does not have a valid SSL Certificate"
     } else {
         # Get the expiration date
@@ -54,13 +54,13 @@ foreach ($url in $urls){
 }
 
 # List the websites that have less-or-equal to set days to expiry
-$almostExpired = $objects | Where-Object "Days to expiry" -le $daysToExpiration | SELECT URL, Expiry, "Days to expiry"
+$almostExpired = $objects | Where-Object "Days to expiry" -le $daysToExpiration | Select-Object URL, Expiry, "Days to expiry"
 
 foreach ($domain in $almostExpired) {
     #Write-Host $domain
-    $domainName = $domain | Select -ExpandProperty URL
-    $domainExpiry = $domain | Select -ExpandProperty "Days to Expiry"
-    $domainExpiryDate = $domain | Select -ExpandProperty Expiry
+    $domainName = $domain | Select-Object -ExpandProperty URL
+    $domainExpiry = $domain | Select-Object -ExpandProperty "Days to Expiry"
+    $domainExpiryDate = $domain | Select-Object -ExpandProperty Expiry
     $ReadbleExpiryDate = $domainExpiryDate.ToString('dd/MMM/yyyy')
     #Write-Host "$domainName will expire in $domainExpiry days ($ReadbleExpiryDate)"
 
