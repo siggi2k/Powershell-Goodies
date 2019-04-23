@@ -1,6 +1,4 @@
 ﻿## This script checks the expiration date of SSL Certificates for websites.
-## To-Do:
-## - Monthly? email with an expiration date for everything, or everything expiring the next (60|90) days?
 
 # Put in the Websites you want to monitor the Certificates
 $urls = 'contoso.com',
@@ -9,7 +7,10 @@ $urls = 'contoso.com',
 
 $date = [datetime]::Now
 
-### Pushbullet API settings
+# Set the notification period for number of days until expiry
+$daysToExpiration = 30
+
+### Pushbullet Sanitized API settings
 $PushURL = "https://api.pushbullet.com/v2/pushes"
 $APIKey = "----"
 $channel_tag = "----"
@@ -52,8 +53,8 @@ foreach ($url in $urls){
 
 }
 
-# List the websites that have less-or-equal to 90 days to expiry
-$almostExpired = $objects | Where-Object "Days to expiry" -le "14" | SELECT URL, Expiry, "Days to expiry"
+# List the websites that have less-or-equal to set days to expiry
+$almostExpired = $objects | Where-Object "Days to expiry" -le $daysToExpiration | SELECT URL, Expiry, "Days to expiry"
 
 foreach ($domain in $almostExpired) {
     #Write-Host $domain

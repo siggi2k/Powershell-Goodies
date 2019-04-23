@@ -17,11 +17,12 @@ This script takes a few steps to make life managing an active directory a bit ea
 2. Moves all disabled users to a new OU specifically for disabled users and marks them as expired as of time of running
 3. Deletes home and profile folders belonging to the users 30 days after expiry
 4. Deletes the User from the active directory 30 days after expiry
+5. Sends a push notification through Pushbullet on automatic archival and deletion
 
 This is all logged in 2 seperate text files.
 
 # checkSSLCert
-Alerts if a website's SSL Certificate is about to expire
+Alerts if a website's SSL Certificate will expire in set number of days
 
 1. Checks when SSL Certificates for websites in array expire
-2. Lists the website url of certificates that expire in the next 90 days
+2. Sends a push notification through Pushbullet when a SSL Certificate will expire within set amount of days (default 30)
